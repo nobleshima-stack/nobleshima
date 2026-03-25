@@ -2,93 +2,41 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greeting System - Minami Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挨拶トーンアップ・システム</title>
     <style>
-        :root { --orange: #FF6B35; --bg: #FFFBF5; --green: #00896F; --accent: #FF92AC; }
-        body { 
-            font-family: sans-serif; text-align: center; background: var(--bg); margin: 0; padding: 10px;
-            overflow-x: hidden; touch-action: manipulation;
-        }
+        :root { --orange: #FF6B35; --bg: #FFFBF5; --green: #00896F; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; text-align: center; background: var(--bg); margin: 0; padding: 20px; }
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--orange); color: white; z-index: 2000;
             display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer;
         }
-        .container { 
-            max-width: 600px; margin: 0 auto; background: white; 
-            padding: 20px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-        }
-        .video-wrapper { 
-            position: relative; margin: 15px auto; width: 100%; max-width: 400px;
-            aspect-ratio: 4/3; border-radius: 20px; overflow: hidden; 
-            border: 5px solid var(--accent); background: #000;
-        }
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .status-badge { 
-            display: inline-block; padding: 12px 30px; border-radius: 50px; 
-            font-weight: bold; margin-top: 15px; font-size: 16px;
-        }
-        .active { background: #D6F5EC; color: var(--green); border: 2px solid var(--green); }
-        .waiting { background: #eee; color: #666; border: 2px solid #ccc; }
-        .cooldown { background: #FFE0E6; color: var(--accent); border: 2px solid var(--accent); }
-        
-        .error-panel { 
-            display: none; color: #333; font-size: 13px; margin-top: 15px; 
-            padding: 20px; background: #fff1f1; border-radius: 15px; text-align: left;
-            border: 2px solid #ffcccc;
-        }
-        .guide-box {
-            background: #fff; padding: 12px; border-radius: 10px; margin-top: 10px; border: 1px solid #ddd;
-        }
-        .copy-area {
-            background: #eee; padding: 8px; font-family: monospace; font-size: 11px;
-            word-break: break-all; border-radius: 5px; display: block; margin: 5px 0;
-            border: 1px dashed #999;
-        }
-        .important-red { color: #d00; font-weight: bold; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .settings { background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; }
+        .settings label { font-size: 14px; font-weight: bold; }
+        video { width: 100%; max-width: 400px; border: 5px solid var(--orange); border-radius: 15px; background: #000; }
+        .status-badge { display: inline-block; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin-top: 15px; }
+        .active { background: #D6F5EC; color: var(--green); }
+        .waiting { background: #eee; color: #666; }
+        .cooldown { background: #E0F4FF; color: #0077B6; }
     </style>
 </head>
 <body>
 
 <div id="overlay" onclick="startSystem()">
-    <h1 style="font-size:48px; margin: 0;">START</h1>
-    <p style="font-size:16px; margin: 10px 0;">南ちゃんモードを起動</p>
-    <p id="sec-status" style="font-size:12px; opacity:0.8;">[環境チェック中]</p>
+    <h1 style="font-size:40px;">START</h1>
+    <p>10種の挨拶を順番に再生します（Edge最適化版）</p>
 </div>
 
 <div class="container">
-    <h2 style="color:var(--orange); margin: 0 0 10px 0;">😊 挨拶トーンアップ</h2>
-    
-    <div class="video-wrapper">
-        <video id="video" autoplay playsinline muted></video>
+    <h2 style="color:var(--orange);">😊 挨拶トーンアップ・システム</h2>
+    <div class="settings">
+        <label>開始 <input type="time" id="start-time" value="06:40"></label>
+        <label>終了 <input type="time" id="end-time" value="10:00"></label>
     </div>
-    
+    <video id="video" autoplay playsinline muted></video>
     <div id="status" class="status-badge waiting">準備中</div>
-    
-    <div id="error-panel" class="error-panel">
-        <strong style="font-size:18px; color:#d00;">⚠️ カメラが起動できません</strong><br>
-        <p>設定を繰り返しても動かない場合、<b>ファイルの開き方</b>が原因です。</p>
-        
-        <div class="guide-box">
-            <b>1. URLをコピーしてください</b>
-            <span class="copy-area" id="url-text"></span>
-            
-            <b>2. Chromeアプリを「直接」開く</b><br>
-            Googleドライブからではなく、ホーム画面の<span class="important-red">Chromeアイコン</span>をタップして起動してください。<br><br>
-            
-            <b>3. URLを貼り付けて移動</b><br>
-            コピーしたURLをChromeのアドレスバーに貼り付けて開きます。<br><br>
-            
-            <b>4. それでもダメな場合の裏技</b><br>
-            フラグ設定画面で <code>localhost</code> と入力されている場所に、URLを貼り付けるのではなく<b>以下をそのまま入力</b>して有効化してください：<br>
-            <code style="background:#eee; padding:2px;">content://com.google.android.apps.docs.storage</code>
-        </div>
-        
-        <button onclick="location.reload()" style="width:100%; padding:15px; margin-top:15px; background:var(--orange); color:white; border:none; border-radius:10px; font-weight:bold;">再試行する</button>
-    </div>
-
-    <div id="voice-info" style="font-size:11px; color:#aaa; margin-top:10px;">音声確認中...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
@@ -97,84 +45,92 @@
 <script>
     const video = document.getElementById('video');
     const status = document.getElementById('status');
-    const errorPanel = document.getElementById('error-panel');
-    const urlText = document.getElementById('url-text');
-    const secStatusText = document.getElementById('sec-status');
-    
     let model = null;
     let isCooldown = false;
-    let selectedVoice = null;
+    let messageIndex = 0;
 
-    window.onload = () => {
-        urlText.innerText = window.location.href;
-        if (window.isSecureContext) {
-            secStatusText.innerText = "接続状況: 安全 (OK)";
-        } else {
-            secStatusText.innerText = "接続状況: 制限あり (要設定)";
-        }
-        initVoices();
-    };
-
-    function initVoices() {
-        const voices = window.speechSynthesis.getVoices();
-        selectedVoice = voices.find(v => v.name.includes("Google") && v.lang.startsWith("ja")) || voices.find(v => v.lang.startsWith("ja"));
-        if (selectedVoice) document.getElementById('voice-info').innerText = "音声: " + selectedVoice.name;
-    }
-    window.speechSynthesis.onvoiceschanged = initVoices;
+    const messages = [
+        "おはようございます。今日も一日、元気に、いきましょう！",
+        "おはようございます。笑顔で、明るい職場を、作っていきませんか？",
+        "おはようございます。いつもより少しだけ、高い声で、挨拶してみましょう！",
+        "おはようございます。今日も、気持ちの良い挨拶から、始めましょうね。",
+        "おはようございます。今日もあなたにとって、良い一日に、なりますように。",
+        "おはようございます。一生懸命なあなたのこと、応援していますね！",
+        "おはようございます。みんなの明るい声が響くと、嬉しいです！",
+        "おはようございます。新しい一歩、一緒に、踏み出していきましょうね。",
+        "おはようございます。爽やかな挨拶で、心もトーンアップ、しませんか？",
+        "おはようございます。今日も素敵な笑顔で、いってらっしゃい！"
+    ];
 
     async function startSystem() {
-        // 音声を有効化
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
         document.getElementById('overlay').style.display = 'none';
-
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); 
+        
         try {
-            status.innerText = "カメラ起動中...";
-            // 権限リクエストのオプションを最小限にして通りやすくする
-            const constraints = { 
-                audio: false, 
-                video: { 
-                    facingMode: "user",
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
-                } 
-            };
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
             video.srcObject = stream;
-            
-            status.innerText = "AI読み込み中...";
+            status.innerText = "モデル読み込み中...";
             model = await cocoSsd.load();
-            
-            status.innerText = "検知中";
-            status.className = "status-badge active";
-            setInterval(detect, 1500);
+            setInterval(detect, 1000);
         } catch (err) {
-            console.error("Camera Error:", err);
-            errorPanel.style.display = 'block';
-            status.innerText = "エラー停止";
+            alert("カメラの許可、またはライブラリの読み込みに失敗しました。");
+            console.error(err);
         }
     }
 
     async function detect() {
+        const now = new Date();
+        const start = document.getElementById('start-time').value.split(':');
+        const end = document.getElementById('end-time').value.split(':');
+        const currentMin = now.getHours() * 60 + now.getMinutes();
+        const startMin = parseInt(start[0]) * 60 + parseInt(start[1]);
+        const endMin = parseInt(end[0]) * 60 + parseInt(end[1]);
+
+        if (currentMin < startMin || currentMin >= endMin) {
+            status.innerText = "稼働時間外";
+            status.className = "status-badge waiting";
+            return;
+        }
+
         if (isCooldown || !model) return;
+
+        status.innerText = "検知中...";
+        status.className = "status-badge active";
+
         const predictions = await model.detect(video);
-        if (predictions.find(p => p.class === 'person' && p.score > 0.6)) {
-            const uttr = new SpeechSynthesisUtterance("おはようございますっ。ーー？ 今日も元気にいきましょうねっ。ーー？");
+        const person = predictions.find(p => p.class === 'person' && p.score > 0.6);
+
+        if (person) {
+            const text = messages[messageIndex];
+            const uttr = new SpeechSynthesisUtterance(text);
             uttr.lang = 'ja-JP';
-            if (selectedVoice) uttr.voice = selectedVoice;
-            uttr.pitch = 1.5;
-            uttr.rate = 1.1;
+            
+            const voices = window.speechSynthesis.getVoices();
+            // Edgeの「Nanami Online (Natural)」を最優先で探す
+            const edgeVoice = voices.find(v => v.name.includes("Nanami") && v.name.includes("Online")) || 
+                              voices.find(v => v.name.includes("Google") && v.lang === "ja-JP") ||
+                              voices.find(v => v.lang === "ja-JP");
+            
+            if (edgeVoice) {
+                uttr.voice = edgeVoice;
+                uttr.pitch = 1.05; 
+                uttr.rate = 1.0; 
+            } else {
+                uttr.pitch = 1.2;
+                uttr.rate = 1.1;
+            }
+            
             window.speechSynthesis.speak(uttr);
 
+            messageIndex = (messageIndex + 1) % messages.length;
             isCooldown = true;
-            status.innerText = "挨拶完了";
+            status.innerText = "挨拶完了（10秒待機）";
             status.className = "status-badge cooldown";
-            setTimeout(() => { 
-                isCooldown = false; 
-                status.innerText = "検知中"; 
-                status.className = "status-badge active"; 
-            }, 15000);
+            setTimeout(() => { isCooldown = false; }, 10000);
         }
     }
+
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
 </script>
 </body>
 </html>
